@@ -19,6 +19,7 @@ typedef void* SEALPlaintext;
 typedef void* SEALEncryptionParameters;
 typedef void* SEALCKKSEncoder;
 typedef void* SEALCiphertext;
+typedef void* SEALRelinKeys;
 
 SEALEncryptionParameters SEALEncryptionParametersBFV(void);
 SEALEncryptionParameters SEALEncryptionParametersCKKS(void);
@@ -31,9 +32,11 @@ SEALKeyGenerator SEALKeyGeneratorInit(SEALContext);
 void SEALKeyGeneratorDelete(SEALKeyGenerator);
 SEALPublicKey SEALKeyGeneratorPublicKey(SEALKeyGenerator);
 SEALSecretKey SEALKeyGeneratorSecretKey(SEALKeyGenerator);
+SEALRelinKeys SEALKeyGeneratorRelinKeys(SEALKeyGenerator, int);
 
 void SEALPublicKeyDelete(SEALPublicKey);
 void SEALSecretKeyDelete(SEALSecretKey);
+void SEALRelinKeysDelete(SEALRelinKeys);
 
 SEALEncryptor SEALEncryptorInit(SEALContext, SEALPublicKey);
 void SEALEncryptorDelete(SEALEncryptor);
@@ -52,6 +55,8 @@ void SEALEvaluatorMultiplyInplace(SEALEvaluator, SEALCiphertext,
                                   SEALCiphertext);
 void SEALEvaluatorMultiplyPlainInplace(SEALEvaluator, SEALCiphertext,
                                        SEALPlaintext);
+void SEALEvaluatorRelinearizeInplace(SEALEvaluator, SEALCiphertext,
+                                     SEALRelinKeys);
 
 SEALDecryptor SEALDecryptorInit(SEALContext, SEALSecretKey);
 void SEALDecryptorDelete(SEALDecryptor);

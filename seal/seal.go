@@ -93,6 +93,21 @@ func (g *KeyGenerator) SecretKey() *SecretKey {
 	return k
 }
 
+type RelinKeys struct {
+	ptr C.SEALRelinKeys
+}
+
+func (g *KeyGenerator) RelinKeys(decomposition_bit_count int) *RelinKeys {
+	k := &RelinKeys{
+		ptr: C.SEALKeyGeneratorRelinKeys(g.ptr, C.int(decomposition_bit_count)),
+	}
+	runtime.SetFinalizer(k, func(k *RelinKeys) {
+		C.SEALRelinKeysDelete(k.ptr)
+		k.ptr = nil
+	})
+	return k
+}
+
 type Encryptor struct {
 	ptr C.SEALEncryptor
 }
@@ -176,6 +191,10 @@ func (e *Evaluator) MultiplyInplace(a *Ciphertext, b *Ciphertext) {
 
 func (e *Evaluator) MultiplyPlainInplace(a *Ciphertext, b *Plaintext) {
 	C.SEALEvaluatorMultiplyPlainInplace(e.ptr, a.ptr, b.ptr)
+}
+
+func (e *Evaluator) RelinearizeInplace(a *Ciphertext, b *RelinKeys) {
+	C.SEALEvaluatorRelinearizeInplace(e.ptr, a.ptr, b.ptr)
 }
 
 type Decryptor struct {

@@ -103,6 +103,15 @@ func TestEncryptionOps(t *testing.T) {
 				return a
 			},
 		},
+		{
+			want: 3.0,
+			f: func() *Ciphertext {
+				a := encrypt(3.0)
+				relinKeys := g.RelinKeys(60)
+				eval.RelinearizeInplace(a, relinKeys)
+				return a
+			},
+		},
 	}
 
 	for i, c := range cases {

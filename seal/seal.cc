@@ -51,12 +51,23 @@ SEALSecretKey SEALKeyGeneratorSecretKey(SEALKeyGenerator g) {
   return (void*)new seal::SecretKey(key);
 }
 
+SEALSecretKey SEALKeyGeneratorRelinKeys(SEALKeyGenerator g,
+                                        int decomposition_bit_count) {
+  auto* generator = static_cast<seal::KeyGenerator*>(g);
+  auto key = generator->relin_keys(decomposition_bit_count);
+  return (void*)new seal::RelinKeys(key);
+}
+
 void SEALPublicKeyDelete(SEALPublicKey k) {
   delete static_cast<seal::PublicKey*>(k);
 }
 
 void SEALSecretKeyDelete(SEALSecretKey k) {
   delete static_cast<seal::SecretKey*>(k);
+}
+
+void SEALRelinKeysDelete(SEALRelinKeys k) {
+  delete static_cast<seal::RelinKeys*>(k);
 }
 
 SEALEncryptor SEALEncryptorInit(SEALContext c, SEALPublicKey k) {
@@ -153,6 +164,14 @@ void SEALEvaluatorMultiplyPlainInplace(SEALEvaluator k, SEALCiphertext aptr,
   auto* a = static_cast<seal::Ciphertext*>(aptr);
   auto* b = static_cast<seal::Plaintext*>(bptr);
   e->multiply_plain_inplace(*a, *b);
+}
+
+void SEALEvaluatorRelinearizeInplace(SEALEvaluator k, SEALCiphertext aptr,
+                                  SEALRelinKeys rptr) {
+  auto* e = static_cast<seal::Evaluator*>(k);
+  auto* a = static_cast<seal::Ciphertext*>(aptr);
+  auto* b = static_cast<seal::RelinKeys*>(rptr);
+  e->relinearize_inplace(*a, *b);
 }
 
 SEALDecryptor SEALDecryptorInit(SEALContext c, SEALSecretKey k) {
