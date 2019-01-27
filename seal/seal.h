@@ -20,6 +20,7 @@ typedef void* SEALEncryptionParameters;
 typedef void* SEALCKKSEncoder;
 typedef void* SEALCiphertext;
 typedef void* SEALRelinKeys;
+typedef void* SEALParmsID;
 
 SEALEncryptionParameters SEALEncryptionParametersBFV(void);
 SEALEncryptionParameters SEALEncryptionParametersCKKS(void);
@@ -57,6 +58,10 @@ void SEALEvaluatorMultiplyPlainInplace(SEALEvaluator, SEALCiphertext,
                                        SEALPlaintext);
 void SEALEvaluatorRelinearizeInplace(SEALEvaluator, SEALCiphertext,
                                      SEALRelinKeys);
+void SEALEvaluatorRescaleToNextInplace(SEALEvaluator, SEALCiphertext);
+void SEALEvaluatorRescaleToInplace(SEALEvaluator, SEALCiphertext, SEALParmsID);
+void SEALEvaluatorExponentiateInplace(SEALEvaluator, SEALCiphertext, uint64_t,
+                                     SEALRelinKeys);
 
 SEALDecryptor SEALDecryptorInit(SEALContext, SEALSecretKey);
 void SEALDecryptorDelete(SEALDecryptor);
@@ -79,6 +84,10 @@ void SEALCKKSEncoderDelete(SEALCKKSEncoder);
 
 void SEALCiphertextDelete(SEALCiphertext);
 SEALCiphertext SEALCiphertextCopy(SEALCiphertext);
+double SEALCiphertextScale(SEALCiphertext);
+SEALParmsID SEALCiphertextParmsID(SEALCiphertext);
+
+void SEALParmsIDDelete(SEALParmsID);
 
 #ifdef __cplusplus
 } /* end extern "C" */

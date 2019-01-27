@@ -146,6 +146,25 @@ func (c *Ciphertext) Copy() *Ciphertext {
 	return newCiphertext(C.SEALCiphertextCopy(c.ptr))
 }
 
+func (c *Ciphertext) Scale() float64 {
+	return float64(C.SEALCiphertextScale(c.ptr))
+}
+
+type ParmsID struct {
+	ptr C.SEALParmsID
+}
+
+func (c *Ciphertext) ParmsID() *ParmsID {
+	e := &ParmsID{
+		ptr: C.SEALCiphertextParmsID(c.ptr),
+	}
+	runtime.SetFinalizer(e, func(e *ParmsID) {
+		C.SEALParmsIDDelete(e.ptr)
+		e.ptr = nil
+	})
+	return e
+}
+
 type Evaluator struct {
 	ptr C.SEALEvaluator
 }
@@ -161,12 +180,24 @@ func NewEvaluator(c *Context) *Evaluator {
 	return e
 }
 
+func (e *Evaluator) Square(c *Ciphertext) *Ciphertext {
+	c = c.Copy()
+	e.SquareInplace(c)
+	return c
+}
+
 func (e *Evaluator) SquareInplace(c *Ciphertext) {
 	C.SEALEvaluatorSquareInplace(e.ptr, c.ptr)
 }
 
 func (e *Evaluator) NegateInplace(c *Ciphertext) {
 	C.SEALEvaluatorNegateInplace(e.ptr, c.ptr)
+}
+
+func (e *Evaluator) Add(a *Ciphertext, b *Ciphertext) *Ciphertext {
+	a = a.Copy()
+	e.AddInplace(a, b)
+	return a
 }
 
 func (e *Evaluator) AddInplace(a *Ciphertext, b *Ciphertext) {
@@ -177,6 +208,12 @@ func (e *Evaluator) AddPlainInplace(a *Ciphertext, b *Plaintext) {
 	C.SEALEvaluatorAddPlainInplace(e.ptr, a.ptr, b.ptr)
 }
 
+func (e *Evaluator) Sub(a *Ciphertext, b *Ciphertext) *Ciphertext {
+	a = a.Copy()
+	e.SubInplace(a, b)
+	return a
+}
+
 func (e *Evaluator) SubInplace(a *Ciphertext, b *Ciphertext) {
 	C.SEALEvaluatorSubInplace(e.ptr, a.ptr, b.ptr)
 }
@@ -185,8 +222,20 @@ func (e *Evaluator) SubPlainInplace(a *Ciphertext, b *Plaintext) {
 	C.SEALEvaluatorSubPlainInplace(e.ptr, a.ptr, b.ptr)
 }
 
+func (e *Evaluator) Multiply(a *Ciphertext, b *Ciphertext) *Ciphertext {
+	a = a.Copy()
+	e.MultiplyInplace(a, b)
+	return a
+}
+
 func (e *Evaluator) MultiplyInplace(a *Ciphertext, b *Ciphertext) {
 	C.SEALEvaluatorMultiplyInplace(e.ptr, a.ptr, b.ptr)
+}
+
+func (e *Evaluator) MultiplyPlain(a *Ciphertext, b *Plaintext) *Ciphertext {
+	a = a.Copy()
+	e.MultiplyPlainInplace(a, b)
+	return a
 }
 
 func (e *Evaluator) MultiplyPlainInplace(a *Ciphertext, b *Plaintext) {
@@ -195,6 +244,18 @@ func (e *Evaluator) MultiplyPlainInplace(a *Ciphertext, b *Plaintext) {
 
 func (e *Evaluator) RelinearizeInplace(a *Ciphertext, b *RelinKeys) {
 	C.SEALEvaluatorRelinearizeInplace(e.ptr, a.ptr, b.ptr)
+}
+
+func (e *Evaluator) ExponentiateInplace(a *Ciphertext, power int64, b *RelinKeys) {
+	C.SEALEvaluatorExponentiateInplace(e.ptr, a.ptr, C.uint64_t(power), b.ptr)
+}
+
+func (e *Evaluator) RescaleToNextInplace(a *Ciphertext) {
+	C.SEALEvaluatorRescaleToNextInplace(e.ptr, a.ptr)
+}
+
+func (e *Evaluator) RescaleToInplace(a *Ciphertext, p *ParmsID) {
+	C.SEALEvaluatorRescaleToInplace(e.ptr, a.ptr, p.ptr)
 }
 
 type Decryptor struct {

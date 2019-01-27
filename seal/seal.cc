@@ -89,6 +89,20 @@ SEALCiphertext SEALCiphertextCopy(SEALCiphertext k) {
   return (void*)new seal::Ciphertext(*c);
 }
 
+double SEALCiphertextScale(SEALCiphertext k) {
+  auto* c = static_cast<seal::Ciphertext*>(k);
+  return c->scale();
+}
+
+SEALParmsID SEALCiphertextParmsID(SEALCiphertext k) {
+  auto* c = static_cast<seal::Ciphertext*>(k);
+  return (void*)new seal::parms_id_type(c->parms_id());
+}
+
+void SEALParmsIDDelete(SEALParmsID k) {
+  delete static_cast<seal::parms_id_type*>(k);
+}
+
 SEALCiphertext SEALEncryptorEncrypt(SEALEncryptor k, SEALPlaintext p) {
   auto* e = static_cast<seal::Encryptor*>(k);
   auto* pl = static_cast<seal::Plaintext*>(p);
@@ -167,11 +181,32 @@ void SEALEvaluatorMultiplyPlainInplace(SEALEvaluator k, SEALCiphertext aptr,
 }
 
 void SEALEvaluatorRelinearizeInplace(SEALEvaluator k, SEALCiphertext aptr,
-                                  SEALRelinKeys rptr) {
+                                     SEALRelinKeys rptr) {
   auto* e = static_cast<seal::Evaluator*>(k);
   auto* a = static_cast<seal::Ciphertext*>(aptr);
   auto* b = static_cast<seal::RelinKeys*>(rptr);
   e->relinearize_inplace(*a, *b);
+}
+
+void SEALEvaluatorExponentiateInplace(SEALEvaluator k, SEALCiphertext aptr,
+                                      uint64_t power, SEALRelinKeys rptr) {
+  auto* e = static_cast<seal::Evaluator*>(k);
+  auto* a = static_cast<seal::Ciphertext*>(aptr);
+  auto* b = static_cast<seal::RelinKeys*>(rptr);
+  e->exponentiate_inplace(*a, power, *b);
+}
+
+void SEALEvaluatorRescaleToNextInplace(SEALEvaluator k, SEALCiphertext aptr) {
+  auto* e = static_cast<seal::Evaluator*>(k);
+  auto* a = static_cast<seal::Ciphertext*>(aptr);
+  e->rescale_to_next_inplace(*a);
+}
+
+void SEALEvaluatorRescaleToInplace(SEALEvaluator k, SEALCiphertext aptr, SEALParmsID pptr) {
+  auto* e = static_cast<seal::Evaluator*>(k);
+  auto* a = static_cast<seal::Ciphertext*>(aptr);
+  auto* p = static_cast<seal::parms_id_type*>(pptr);
+  e->rescale_to_inplace(*a, *p);
 }
 
 SEALDecryptor SEALDecryptorInit(SEALContext c, SEALSecretKey k) {
