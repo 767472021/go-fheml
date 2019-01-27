@@ -11,8 +11,13 @@ SEALEncryptionParameters SEALEncryptionParametersBFV(void) {
 
 SEALEncryptionParameters SEALEncryptionParametersCKKS(void) {
   auto* params = new seal::EncryptionParameters(seal::scheme_type::CKKS);
-  params->set_poly_modulus_degree(8192);
-  params->set_coeff_modulus(seal::coeff_modulus_128(8192));
+  params->set_poly_modulus_degree(16384);
+  params->set_coeff_modulus(seal::coeff_modulus_128(16384));
+  /*
+	params->set_coeff_modulus({
+      seal::small_mods_40bit(0), seal::small_mods_40bit(1),
+			seal::small_mods_40bit(2), seal::small_mods_40bit(3) });
+      */
   return (void*)params;
 }
 
@@ -52,9 +57,9 @@ SEALSecretKey SEALKeyGeneratorSecretKey(SEALKeyGenerator g) {
 }
 
 SEALSecretKey SEALKeyGeneratorRelinKeys(SEALKeyGenerator g,
-                                        int decomposition_bit_count) {
+                                        int decomposition_bit_count, int num) {
   auto* generator = static_cast<seal::KeyGenerator*>(g);
-  auto key = generator->relin_keys(decomposition_bit_count);
+  auto key = generator->relin_keys(decomposition_bit_count, num);
   return (void*)new seal::RelinKeys(key);
 }
 
@@ -101,6 +106,12 @@ SEALParmsID SEALCiphertextParmsID(SEALCiphertext k) {
 
 void SEALParmsIDDelete(SEALParmsID k) {
   delete static_cast<seal::parms_id_type*>(k);
+}
+
+int SEALParmsIDEq(SEALParmsID aptr, SEALParmsID bptr) {
+  auto* a = static_cast<seal::parms_id_type*>(aptr);
+  auto* b = static_cast<seal::parms_id_type*>(bptr);
+  return *a == *b;
 }
 
 SEALCiphertext SEALEncryptorEncrypt(SEALEncryptor k, SEALPlaintext p) {
@@ -206,7 +217,11 @@ void SEALEvaluatorRescaleToInplace(SEALEvaluator k, SEALCiphertext aptr, SEALPar
   auto* e = static_cast<seal::Evaluator*>(k);
   auto* a = static_cast<seal::Ciphertext*>(aptr);
   auto* p = static_cast<seal::parms_id_type*>(pptr);
-  e->rescale_to_inplace(*a, *p);
+  auto pool = seal::MemoryManager::GetPool();
+  if (!pool) {
+    throw std::invalid_argument("what the fuck");
+  }
+  e->rescale_to_inplace(*a, *p, pool);
 }
 
 SEALDecryptor SEALDecryptorInit(SEALContext c, SEALSecretKey k) {
@@ -265,11 +280,16 @@ void SEALCKKSEncoderDelete(SEALCKKSEncoder k) {
 }
 
 SEALPlaintext SEALCKKSEncoderEncode(SEALCKKSEncoder k, double num,
-                                    double scale) {
+                                    SEALParmsID pidptr, double scale) {
   auto* e = static_cast<seal::CKKSEncoder*>(k);
   std::vector<double> data{num};
   seal::Plaintext p;
-  e->encode(data, scale, p);
+  if (pidptr != nullptr) {
+    auto* pid = static_cast<seal::parms_id_type*>(pidptr);
+    e->encode(data, *pid, scale, p);
+  } else {
+    e->encode(data, scale, p);
+  }
   return (void*)new seal::Plaintext(p);
 }
 

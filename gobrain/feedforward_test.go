@@ -17,7 +17,7 @@ func ExampleSimpleFeedForward() {
 	g := seal.NewKeyGenerator(c)
 	pub := g.PublicKey()
 	sec := g.SecretKey()
-	relin := g.RelinKeys(60)
+	relin := g.RelinKeys(60, 2)
 
 	encr := seal.NewEncryptor(c, pub)
 	enco := seal.NewCKKSEncoder(c)
@@ -60,7 +60,7 @@ func ExampleSimpleFeedForward() {
 	// the training will run for 1000 epochs
 	// the learning rate is set to 0.6 and the momentum factor to 0.4
 	// use true in the last parameter to receive reports about the learning error
-	fmt.Println("Train", d(ff.Train(patterns, 1, 0.6, 0.4, false)))
+	fmt.Println("Train", d(ff.Train(patterns, 1, 0.6, 0.4)))
 
 	// testing the network
 	//ff.Test(patterns)

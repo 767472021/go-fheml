@@ -1,6 +1,6 @@
 package seal
 
-// #cgo CXXFLAGS: -std=c++17
+// #cgo CXXFLAGS: -std=c++17 -g
 // #cgo LDFLAGS: -lseal
 // #include "seal.h"
 import "C"
@@ -97,9 +97,9 @@ type RelinKeys struct {
 	ptr C.SEALRelinKeys
 }
 
-func (g *KeyGenerator) RelinKeys(decomposition_bit_count int) *RelinKeys {
+func (g *KeyGenerator) RelinKeys(decomposition_bit_count, num int) *RelinKeys {
 	k := &RelinKeys{
-		ptr: C.SEALKeyGeneratorRelinKeys(g.ptr, C.int(decomposition_bit_count)),
+		ptr: C.SEALKeyGeneratorRelinKeys(g.ptr, C.int(decomposition_bit_count), C.int(num)),
 	}
 	runtime.SetFinalizer(k, func(k *RelinKeys) {
 		C.SEALRelinKeysDelete(k.ptr)
@@ -163,6 +163,10 @@ func (c *Ciphertext) ParmsID() *ParmsID {
 		e.ptr = nil
 	})
 	return e
+}
+
+func (a *ParmsID) Eq(b *ParmsID) bool {
+	return C.SEALParmsIDEq(a.ptr, b.ptr) == 1
 }
 
 type Evaluator struct {
@@ -255,7 +259,10 @@ func (e *Evaluator) RescaleToNextInplace(a *Ciphertext) {
 }
 
 func (e *Evaluator) RescaleToInplace(a *Ciphertext, p *ParmsID) {
-	C.SEALEvaluatorRescaleToInplace(e.ptr, a.ptr, p.ptr)
+	for !a.ParmsID().Eq(p) {
+		e.RescaleToNextInplace(a)
+	}
+	//C.SEALEvaluatorRescaleToInplace(e.ptr, a.ptr, p.ptr)
 }
 
 type Decryptor struct {
@@ -333,7 +340,15 @@ func NewCKKSEncoder(c *Context) *CKKSEncoder {
 func (e *CKKSEncoder) Encode(num float64) *Plaintext {
 	// 60 bits
 	scale := math.Pow(2.0, 60)
-	return newPlaintext(C.SEALCKKSEncoderEncode(e.ptr, C.double(num), C.double(scale)))
+	return e.EncodeScale(num, scale)
+}
+
+func (e *CKKSEncoder) EncodeScale(num, scale float64) *Plaintext {
+	return e.EncodeParmsIDScale(num, &ParmsID{}, scale)
+}
+
+func (e *CKKSEncoder) EncodeParmsIDScale(num float64, p *ParmsID, scale float64) *Plaintext {
+	return newPlaintext(C.SEALCKKSEncoderEncode(e.ptr, C.double(num), p.ptr, C.double(scale)))
 }
 
 func (e *CKKSEncoder) Decode(p *Plaintext) float64 {

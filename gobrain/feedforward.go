@@ -127,6 +127,13 @@ func (nn *FeedForward) Update(inputs []*seal.Ciphertext) []*seal.Ciphertext {
 		nn.HiddenActivations[i] = nn.sigmoid(sum)
 	}
 
+	nn.HiddenActivations[nn.NHiddens-1] = nn.Encryptor.Encrypt(
+		nn.Encoder.EncodeScale(0, nn.HiddenActivations[0].Scale()))
+
+	for i, ia := range nn.HiddenActivations {
+		log.Println(i, ia.Scale())
+	}
+
 	// update the contexts
 	if len(nn.Contexts) > 0 {
 		for i := len(nn.Contexts) - 1; i > 0; i-- {
@@ -138,10 +145,18 @@ func (nn *FeedForward) Update(inputs []*seal.Ciphertext) []*seal.Ciphertext {
 	for i := 0; i < nn.NOutputs; i++ {
 		var sum *seal.Ciphertext
 		for j := 0; j < nn.NHiddens; j++ {
-			elem := nn.Evaluator.Multiply(nn.HiddenActivations[j], nn.OutputWeights[j][i])
+			activation := nn.HiddenActivations[j]
+			output := nn.OutputWeights[j][i]
+			log.Println(i, j, output, activation)
+			nn.Evaluator.RescaleToInplace(output, activation.ParmsID())
+			elem := nn.Evaluator.Multiply(activation, output)
 			if sum == nil {
 				sum = elem
 			} else {
+				log.Println(sum.Scale(), elem.Scale())
+				nn.Evaluator.RelinearizeInplace(elem, nn.RelinKeys)
+				nn.Evaluator.RescaleToInplace(elem, sum.ParmsID())
+				log.Println(sum.Scale(), elem.Scale())
 				nn.Evaluator.AddInplace(sum, elem)
 			}
 		}
@@ -161,31 +176,48 @@ func (nn *FeedForward) BackPropagate(targets []*seal.Ciphertext, lRate, mFactor 
 		log.Fatal("Error: wrong number of target values")
 	}
 
-	lRatePlain := nn.Encoder.Encode(lRate)
-	mFactorPlain := nn.Encoder.Encode(mFactor)
-
 	outputDeltas := nn.vector(nn.NOutputs, 0.0)
 	for i := 0; i < nn.NOutputs; i++ {
+		target := targets[i]
+		activation := nn.OutputActivations[i]
+		nn.Evaluator.RescaleToInplace(target, activation.ParmsID())
 		outputDeltas[i] = nn.Evaluator.Multiply(
-			nn.dsigmoid(nn.OutputActivations[i]),
-			nn.Evaluator.Sub(targets[i], nn.OutputActivations[i]))
+			nn.dsigmoid(activation),
+			nn.Evaluator.Sub(target, activation))
 	}
 
 	hiddenDeltas := nn.vector(nn.NHiddens, 0.0)
 	for i := 0; i < nn.NHiddens; i++ {
-		e := nn.Encryptor.Encrypt(nn.Encoder.Encode(0))
+		var e *seal.Ciphertext
 
 		for j := 0; j < nn.NOutputs; j++ {
-			nn.Evaluator.AddInplace(e,
-				nn.Evaluator.Multiply(outputDeltas[j], nn.OutputWeights[i][j]))
+			delta := outputDeltas[j]
+			weight := nn.OutputWeights[i][j]
+			nn.Evaluator.RelinearizeInplace(weight, nn.RelinKeys)
+			nn.Evaluator.RescaleToInplace(weight, delta.ParmsID())
+			entry := nn.Evaluator.Multiply(delta, weight)
+			if e == nil {
+				e = entry
+			} else {
+				nn.Evaluator.AddInplace(e, entry)
+			}
 		}
-
-		hiddenDeltas[i] = nn.Evaluator.Multiply(nn.dsigmoid(nn.HiddenActivations[i]), e)
+		activation := nn.dsigmoid(nn.HiddenActivations[i])
+		nn.Evaluator.RelinearizeInplace(activation, nn.RelinKeys)
+		nn.Evaluator.RescaleToInplace(activation, e.ParmsID())
+		hiddenDeltas[i] = nn.Evaluator.Multiply(activation, e)
 	}
+
+	var lRatePlain *seal.Plaintext
+	mFactorPlain := nn.Encoder.Encode(mFactor)
 
 	for i := 0; i < nn.NHiddens; i++ {
 		for j := 0; j < nn.NOutputs; j++ {
 			change := nn.Evaluator.Multiply(outputDeltas[j], nn.HiddenActivations[i])
+			if lRatePlain == nil {
+				lRatePlain = nn.Encoder.EncodeParmsIDScale(lRate, change.ParmsID(), change.Scale())
+				log.Println("lRate", lRate, nn.Encoder.Decode(lRatePlain), change.Scale())
+			}
 			nn.Evaluator.AddInplace(nn.OutputWeights[i][j],
 				nn.Evaluator.MultiplyPlain(change, lRatePlain))
 			nn.Evaluator.AddInplace(nn.OutputWeights[i][j],
@@ -223,7 +255,7 @@ func (nn *FeedForward) BackPropagate(targets []*seal.Ciphertext, lRate, mFactor 
 This method is used to train the Network, it will run the training operation for 'iterations' times
 and return the computed errors when training.
 */
-func (nn *FeedForward) Train(patterns [][][]*seal.Ciphertext, iterations int, lRate, mFactor float64, debug bool) []*seal.Ciphertext {
+func (nn *FeedForward) Train(patterns [][][]*seal.Ciphertext, iterations int, lRate, mFactor float64) []*seal.Ciphertext {
 	errors := make([]*seal.Ciphertext, iterations)
 
 	for i := 0; i < iterations; i++ {

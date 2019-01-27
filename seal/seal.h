@@ -33,7 +33,7 @@ SEALKeyGenerator SEALKeyGeneratorInit(SEALContext);
 void SEALKeyGeneratorDelete(SEALKeyGenerator);
 SEALPublicKey SEALKeyGeneratorPublicKey(SEALKeyGenerator);
 SEALSecretKey SEALKeyGeneratorSecretKey(SEALKeyGenerator);
-SEALRelinKeys SEALKeyGeneratorRelinKeys(SEALKeyGenerator, int);
+SEALRelinKeys SEALKeyGeneratorRelinKeys(SEALKeyGenerator, int, int);
 
 void SEALPublicKeyDelete(SEALPublicKey);
 void SEALSecretKeyDelete(SEALSecretKey);
@@ -78,7 +78,7 @@ double SEALBinaryFractionalEncoderDecode(SEALBinaryFractionalEncoder,
 void SEALPlaintextDelete(SEALPlaintext);
 
 SEALCKKSEncoder SEALCKKSEncoderInit(SEALContext);
-SEALPlaintext SEALCKKSEncoderEncode(SEALCKKSEncoder, double, double);
+SEALPlaintext SEALCKKSEncoderEncode(SEALCKKSEncoder, double, SEALParmsID, double);
 double SEALCKKSEncoderDecode(SEALCKKSEncoder, SEALPlaintext);
 void SEALCKKSEncoderDelete(SEALCKKSEncoder);
 
@@ -88,6 +88,7 @@ double SEALCiphertextScale(SEALCiphertext);
 SEALParmsID SEALCiphertextParmsID(SEALCiphertext);
 
 void SEALParmsIDDelete(SEALParmsID);
+int SEALParmsIDEq(SEALParmsID, SEALParmsID);
 
 #ifdef __cplusplus
 } /* end extern "C" */

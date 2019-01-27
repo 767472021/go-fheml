@@ -1,6 +1,8 @@
 package gobrain
 
 import (
+	"log"
+	"math"
 	"math/rand"
 
 	"github.com/d4l3k/go-fheml/seal"
@@ -34,14 +36,18 @@ func (nn *FeedForward) vector(I int, fill float64) []*seal.Ciphertext {
 func (nn *FeedForward) sigmoid(x *seal.Ciphertext) *seal.Ciphertext {
 	x = x.Copy()
 	nn.Evaluator.RelinearizeInplace(x, nn.RelinKeys)
-	nn.Evaluator.RescaleToNextInplace(x)
+	for x.Scale() > math.Pow(2, 64) {
+		nn.Evaluator.RescaleToNextInplace(x)
+	}
+	log.Println(x.Scale())
 	nn.Evaluator.SquareInplace(x)
+	nn.Evaluator.RelinearizeInplace(x, nn.RelinKeys)
 	return x
 	//return 1 / (1 + math.Exp(-x))
 }
 
 func (nn *FeedForward) dsigmoid(y *seal.Ciphertext) *seal.Ciphertext {
-	c := nn.Encryptor.Encrypt(nn.Encoder.Encode(1))
+	c := nn.Encryptor.Encrypt(nn.Encoder.EncodeParmsIDScale(1, y.ParmsID(), y.Scale()))
 	nn.Evaluator.SubInplace(c, y)
 	nn.Evaluator.MultiplyInplace(c, y)
 	return c

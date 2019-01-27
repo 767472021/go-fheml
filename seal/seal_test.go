@@ -107,8 +107,18 @@ func TestEncryptionOps(t *testing.T) {
 			want: 3.0,
 			f: func() *Ciphertext {
 				a := encrypt(3.0)
-				relinKeys := g.RelinKeys(60)
+				relinKeys := g.RelinKeys(60, 1)
 				eval.RelinearizeInplace(a, relinKeys)
+				return a
+			},
+		},
+		{
+			want: 3.0,
+			f: func() *Ciphertext {
+				a := encrypt(3.0)
+				if !a.ParmsID().Eq(a.ParmsID()) {
+					t.Fatalf("paramsID not eq")
+				}
 				return a
 			},
 		},
