@@ -46,6 +46,12 @@ void SEALEvaluatorSquareInplace(SEALEvaluator, SEALCiphertext);
 void SEALEvaluatorNegateInplace(SEALEvaluator, SEALCiphertext);
 void SEALEvaluatorAddInplace(SEALEvaluator, SEALCiphertext, SEALCiphertext);
 void SEALEvaluatorAddPlainInplace(SEALEvaluator, SEALCiphertext, SEALPlaintext);
+void SEALEvaluatorSubInplace(SEALEvaluator, SEALCiphertext, SEALCiphertext);
+void SEALEvaluatorSubPlainInplace(SEALEvaluator, SEALCiphertext, SEALPlaintext);
+void SEALEvaluatorMultiplyInplace(SEALEvaluator, SEALCiphertext,
+                                  SEALCiphertext);
+void SEALEvaluatorMultiplyPlainInplace(SEALEvaluator, SEALCiphertext,
+                                       SEALPlaintext);
 
 SEALDecryptor SEALDecryptorInit(SEALContext, SEALSecretKey);
 void SEALDecryptorDelete(SEALDecryptor);

@@ -67,6 +67,42 @@ func TestEncryptionOps(t *testing.T) {
 				return a
 			},
 		},
+		{
+			want: -1.0,
+			f: func() *Ciphertext {
+				a := encrypt(3.0)
+				b := encrypt(4.0)
+				eval.SubInplace(a, b)
+				return a
+			},
+		},
+		{
+			want: -1.0,
+			f: func() *Ciphertext {
+				a := encrypt(3.0)
+				b := enc.Encode(4.0)
+				eval.SubPlainInplace(a, b)
+				return a
+			},
+		},
+		{
+			want: 12.0,
+			f: func() *Ciphertext {
+				a := encrypt(3.0)
+				b := encrypt(4.0)
+				eval.MultiplyInplace(a, b)
+				return a
+			},
+		},
+		{
+			want: 12.0,
+			f: func() *Ciphertext {
+				a := encrypt(3.0)
+				b := enc.Encode(4.0)
+				eval.MultiplyPlainInplace(a, b)
+				return a
+			},
+		},
 	}
 
 	for i, c := range cases {

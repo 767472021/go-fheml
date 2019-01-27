@@ -162,6 +162,22 @@ func (e *Evaluator) AddPlainInplace(a *Ciphertext, b *Plaintext) {
 	C.SEALEvaluatorAddPlainInplace(e.ptr, a.ptr, b.ptr)
 }
 
+func (e *Evaluator) SubInplace(a *Ciphertext, b *Ciphertext) {
+	C.SEALEvaluatorSubInplace(e.ptr, a.ptr, b.ptr)
+}
+
+func (e *Evaluator) SubPlainInplace(a *Ciphertext, b *Plaintext) {
+	C.SEALEvaluatorSubPlainInplace(e.ptr, a.ptr, b.ptr)
+}
+
+func (e *Evaluator) MultiplyInplace(a *Ciphertext, b *Ciphertext) {
+	C.SEALEvaluatorMultiplyInplace(e.ptr, a.ptr, b.ptr)
+}
+
+func (e *Evaluator) MultiplyPlainInplace(a *Ciphertext, b *Plaintext) {
+	C.SEALEvaluatorMultiplyPlainInplace(e.ptr, a.ptr, b.ptr)
+}
+
 type Decryptor struct {
 	ptr C.SEALDecryptor
 }
