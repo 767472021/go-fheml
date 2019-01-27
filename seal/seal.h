@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,6 +42,11 @@ SEALCiphertext SEALEncryptorEncrypt(SEALEncryptor, SEALPlaintext);
 SEALEvaluator SEALEvaluatorInit(SEALContext);
 void SEALEvaluatorDelete(SEALEvaluator);
 
+void SEALEvaluatorSquareInplace(SEALEvaluator, SEALCiphertext);
+void SEALEvaluatorNegateInplace(SEALEvaluator, SEALCiphertext);
+void SEALEvaluatorAddInplace(SEALEvaluator, SEALCiphertext, SEALCiphertext);
+void SEALEvaluatorAddPlainInplace(SEALEvaluator, SEALCiphertext, SEALPlaintext);
+
 SEALDecryptor SEALDecryptorInit(SEALContext, SEALSecretKey);
 void SEALDecryptorDelete(SEALDecryptor);
 SEALPlaintext SEALDecryptorDecrypt(SEALDecryptor, SEALCiphertext);
@@ -60,6 +67,7 @@ double SEALCKKSEncoderDecode(SEALCKKSEncoder, SEALPlaintext);
 void SEALCKKSEncoderDelete(SEALCKKSEncoder);
 
 void SEALCiphertextDelete(SEALCiphertext);
+SEALCiphertext SEALCiphertextCopy(SEALCiphertext);
 
 #ifdef __cplusplus
 } /* end extern "C" */

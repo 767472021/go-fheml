@@ -127,6 +127,10 @@ func newCiphertext(ptr C.SEALCiphertext) *Ciphertext {
 	return e
 }
 
+func (c *Ciphertext) Copy() *Ciphertext {
+	return newCiphertext(C.SEALCiphertextCopy(c.ptr))
+}
+
 type Evaluator struct {
 	ptr C.SEALEvaluator
 }
@@ -140,6 +144,22 @@ func NewEvaluator(c *Context) *Evaluator {
 		e.ptr = nil
 	})
 	return e
+}
+
+func (e *Evaluator) SquareInplace(c *Ciphertext) {
+	C.SEALEvaluatorSquareInplace(e.ptr, c.ptr)
+}
+
+func (e *Evaluator) NegateInplace(c *Ciphertext) {
+	C.SEALEvaluatorNegateInplace(e.ptr, c.ptr)
+}
+
+func (e *Evaluator) AddInplace(a *Ciphertext, b *Ciphertext) {
+	C.SEALEvaluatorAddInplace(e.ptr, a.ptr, b.ptr)
+}
+
+func (e *Evaluator) AddPlainInplace(a *Ciphertext, b *Plaintext) {
+	C.SEALEvaluatorAddPlainInplace(e.ptr, a.ptr, b.ptr)
 }
 
 type Decryptor struct {

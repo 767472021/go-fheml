@@ -73,6 +73,11 @@ void SEALCiphertextDelete(SEALCiphertext k) {
   delete static_cast<seal::Ciphertext*>(k);
 }
 
+SEALCiphertext SEALCiphertextCopy(SEALCiphertext k) {
+  auto* c = static_cast<seal::Ciphertext*>(k);
+  return (void*)new seal::Ciphertext(*c);
+}
+
 SEALCiphertext SEALEncryptorEncrypt(SEALEncryptor k, SEALPlaintext p) {
   auto* e = static_cast<seal::Encryptor*>(k);
   auto* pl = static_cast<seal::Plaintext*>(p);
@@ -88,6 +93,32 @@ SEALEvaluator SEALEvaluatorInit(SEALContext c) {
 
 void SEALEvaluatorDelete(SEALEvaluator k) {
   delete static_cast<seal::Evaluator*>(k);
+}
+
+void SEALEvaluatorSquareInplace(SEALEvaluator k, SEALCiphertext cptr) {
+  auto *e = static_cast<seal::Evaluator*>(k);
+  auto *c = static_cast<seal::Ciphertext*>(cptr);
+  e->square_inplace(*c);
+}
+
+void SEALEvaluatorNegateInplace(SEALEvaluator k, SEALCiphertext cptr) {
+  auto *e = static_cast<seal::Evaluator*>(k);
+  auto *c = static_cast<seal::Ciphertext*>(cptr);
+  e->negate_inplace(*c);
+}
+
+void SEALEvaluatorAddInplace(SEALEvaluator k, SEALCiphertext aptr, SEALCiphertext bptr) {
+  auto *e = static_cast<seal::Evaluator*>(k);
+  auto *a = static_cast<seal::Ciphertext*>(aptr);
+  auto *b = static_cast<seal::Ciphertext*>(bptr);
+  e->add_inplace(*a, *b);
+}
+
+void SEALEvaluatorAddPlainInplace(SEALEvaluator k, SEALCiphertext aptr, SEALPlaintext bptr) {
+  auto *e = static_cast<seal::Evaluator*>(k);
+  auto *a = static_cast<seal::Ciphertext*>(aptr);
+  auto *b = static_cast<seal::Plaintext*>(bptr);
+  e->add_plain_inplace(*a, *b);
 }
 
 SEALDecryptor SEALDecryptorInit(SEALContext c, SEALSecretKey k) {
